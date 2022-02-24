@@ -84,3 +84,6 @@ jspm_packages/
 
 # Vite output
 dist
+ 
+.vercel
+.output

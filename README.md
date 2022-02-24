@@ -1,4 +1,4 @@
-# Hydrogen App
+# Hydrogen App in Vercel Edge Function
 
 Hydrogen is a React framework and SDK that you can use to build fast and dynamic Shopify custom storefronts.
 
@@ -18,23 +18,18 @@ yarn dev
 
 Remember to update `shopify.config.js` with your shop's domain and Storefront API token!
 
-## Previewing a production build
+### Vercel project
 
-To run a local preview of your Hydrogen app in an environment similar to Oxygen, build your Hydrogen app and then run `yarn preview`:
+Link this directory to a Vercel project and set the following environment variable in Vercel Dashboard:
 
-```bash
-yarn build
-yarn preview
-```
+- `ENABLE_FILE_SYSTEM_API`: `1`
 
 ## Building for production
 
+Build for production with the following command:
+
 ```bash
 yarn build
 ```
 
-Then, you can run a local `server.js` using the production build with:
-
-```bash
-yarn serve
-```
+This generates a Vercel Edge Function (middleware) in `.output` directory.
