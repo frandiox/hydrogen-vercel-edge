@@ -16,13 +16,15 @@ yarn
 yarn dev
 ```
 
-Remember to update `shopify.config.js` with your shop's domain and Storefront API token!
+Remember to update `hydrogen.config.js` with your shop's domain and Storefront API token!
 
-### Vercel project
+### Vercel project setup
+
+Install Vercel CLI (>=25.0.0) and login into your account.
 
 Link this directory to a Vercel project and set the following environment variable in Vercel Dashboard:
 
-- `ENABLE_FILE_SYSTEM_API`: `1`
+- `ENABLE_VC_BUILD`: `1`
 
 ## Building for production
 
@@ -32,4 +34,11 @@ Build for production with the following command:
 yarn build
 ```
 
-This generates a Vercel Edge Function (middleware) in `.output` directory.
+This generates a Vercel Edge Function (middleware) in `.vercel/output` directory.
+Deploy using the `--prebuilt` option in Vercel CLI:
+
+```bash
+vercel deploy --prebuilt
+# or
+yarn deploy
+```
