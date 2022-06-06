@@ -1,5 +1,10 @@
-import {useShopQuery, flattenConnection, Link} from '@shopify/hydrogen';
-import gql from 'graphql-tag';
+import {
+  useShop,
+  useShopQuery,
+  flattenConnection,
+  Link,
+  gql,
+} from '@shopify/hydrogen';
 import {Suspense} from 'react';
 
 function ExternalIcon() {
@@ -39,7 +44,13 @@ function BoxFallback() {
 }
 
 function StorefrontInfo() {
-  const {data} = useShopQuery({query: QUERY, preload: true});
+  const {languageCode} = useShop();
+
+  const {data} = useShopQuery({
+    query: QUERY,
+    variables: {language: languageCode},
+    preload: true,
+  });
   const shopName = data ? data.shop.name : '';
   const products = data && flattenConnection(data.products);
   const collections = data && flattenConnection(data.collections);
@@ -86,7 +97,13 @@ function StorefrontInfo() {
 }
 
 function TemplateLinks() {
-  const {data} = useShopQuery({query: QUERY, preload: true});
+  const {languageCode} = useShop();
+
+  const {data} = useShopQuery({
+    query: QUERY,
+    variables: {language: languageCode},
+    preload: true,
+  });
   const products = data && flattenConnection(data.products);
   const collections = data && flattenConnection(data.collections);
 
@@ -166,18 +183,19 @@ export default function Welcome() {
 }
 
 const QUERY = gql`
-  query welcomeContent {
+  query welcomeContent($language: LanguageCode)
+  @inContext(language: $language) {
     shop {
       name
     }
-    products(first: 250) {
+    products(first: 3) {
       edges {
         node {
           handle
         }
       }
     }
-    collections(first: 250) {
+    collections(first: 3) {
       edges {
         node {
           handle

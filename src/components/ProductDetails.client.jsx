@@ -3,12 +3,10 @@ import {
   useProduct,
   useParsedMetafields,
   ProductProvider,
-  ProductTitle,
-  ProductDescription,
   ProductPrice,
   AddToCartButton,
   BuyNowButton,
-} from '@shopify/hydrogen/client';
+} from '@shopify/hydrogen';
 import ProductOptions from './ProductOptions.client';
 import Gallery from './Gallery.client';
 import {
@@ -90,10 +88,28 @@ function SizeChart() {
   );
 }
 
+function ProductPrices() {
+  const product = useProduct();
+
+  return (
+    <>
+      <ProductPrice
+        className="text-gray-500 line-through text-lg font-semibold"
+        priceType="compareAt"
+        variantId={product.selectedVariant.id}
+      />
+      <ProductPrice
+        className="text-gray-900 text-lg font-semibold"
+        variantId={product.selectedVariant.id}
+      />
+    </>
+  );
+}
+
 export default function ProductDetails({product}) {
   const initialVariant = flattenConnection(product.variants)[0];
 
-  const productMetafields = useParsedMetafields(product.metafields);
+  const productMetafields = useParsedMetafields(product.metafields || {});
   const sizeChartMetafield = productMetafields.find(
     (metafield) =>
       metafield.namespace === 'my_fields' && metafield.key === 'size_chart',
@@ -113,10 +129,9 @@ export default function ProductDetails({product}) {
       <ProductProvider data={product} initialVariantId={initialVariant.id}>
         <div className="grid grid-cols-1 md:grid-cols-[2fr,1fr] gap-x-8 my-16">
           <div className="md:hidden mt-5 mb-8">
-            <ProductTitle
-              as="h1"
-              className="text-4xl font-bold text-black mb-4"
-            />
+            <h1 className="text-4xl font-bold text-black mb-4">
+              {product.title}
+            </h1>
             {product.vendor && (
               <div className="text-sm font-medium mb-2 text-gray-900">
                 {product.vendor}
@@ -124,15 +139,7 @@ export default function ProductDetails({product}) {
             )}
             <span />
             <div className="flex justify-between md:block">
-              <ProductPrice
-                className="text-gray-500 line-through text-lg font-semibold"
-                priceType="compareAt"
-                variantId={initialVariant.id}
-              />
-              <ProductPrice
-                className="text-gray-900 text-lg font-semibold"
-                variantId={initialVariant.id}
-              />
+              <ProductPrices />
             </div>
           </div>
 
@@ -140,24 +147,15 @@ export default function ProductDetails({product}) {
 
           <div>
             <div className="hidden md:block">
-              <ProductTitle
-                as="h1"
-                className="text-5xl font-bold text-black mb-4"
-              />
+              <h1 className="text-5xl font-bold text-black mb-4">
+                {product.title}
+              </h1>
               {product.vendor && (
                 <div className="text-sm font-medium mb-2 text-gray-900">
                   {product.vendor}
                 </div>
               )}
-              <ProductPrice
-                className="text-gray-500 line-through text-lg font-semibold"
-                priceType="compareAt"
-                variantId={initialVariant.id}
-              />
-              <ProductPrice
-                className="text-gray-900 text-lg font-semibold"
-                variantId={initialVariant.id}
-              />
+              <ProductPrices />
             </div>
             {/* Product Options */}
             <div className="mt-8">
@@ -218,8 +216,9 @@ export default function ProductDetails({product}) {
                 )}
               </div>
             </div>
-            {/* Product Description */}
-            <ProductDescription className="prose border-t border-gray-200 pt-6 text-black text-md" />
+            <div className="prose border-t border-gray-200 pt-6 text-black text-md">
+              {product.description}
+            </div>
             {sizeChartMetafield?.value && (
               <div className="border-t border-gray-200">
                 <SizeChart />

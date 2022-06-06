@@ -1,29 +1,28 @@
 import {
-  MediaFileFragment,
-  ProductProviderFragment,
+  useSession,
+  useShop,
   useShopQuery,
   flattenConnection,
-  RawHtml,
   Seo,
+  gql,
 } from '@shopify/hydrogen';
-import gql from 'graphql-tag';
 
 import LoadMoreProducts from '../../components/LoadMoreProducts.client';
 import Layout from '../../components/Layout.server';
 import ProductCard from '../../components/ProductCard';
 import NotFound from '../../components/NotFound.server';
 
-export default function Collection({
-  country = {isoCode: 'US'},
-  collectionProductCount = 24,
-  params,
-}) {
+export default function Collection({collectionProductCount = 24, params}) {
+  const {languageCode} = useShop();
+  const {countryCode = 'US'} = useSession();
+
   const {handle} = params;
   const {data} = useShopQuery({
     query: QUERY,
     variables: {
       handle,
-      country: country.isoCode,
+      country: countryCode,
+      language: languageCode,
       numProducts: collectionProductCount,
     },
     preload: true,
@@ -40,11 +39,14 @@ export default function Collection({
   return (
     <Layout>
       {/* the seo object will be expose in API version 2022-04 or later */}
-      <Seo type="collection" data={{seo: {}, ...collection}} />
+      <Seo type="collection" data={collection} />
       <h1 className="font-bold text-4xl md:text-5xl text-gray-900 mb-6 mt-6">
         {collection.title}
       </h1>
-      <RawHtml string={collection.descriptionHtml} className="text-lg" />
+      <div
+        dangerouslySetInnerHTML={{__html: collection.descriptionHtml}}
+        className="text-lg"
+      />
       <p className="text-sm text-gray-500 mt-5 mb-5">
         {products.length} {products.length > 1 ? 'products' : 'product'}
       </p>
@@ -66,31 +68,65 @@ const QUERY = gql`
   query CollectionDetails(
     $handle: String!
     $country: CountryCode
+    $language: LanguageCode
     $numProducts: Int!
-    $includeReferenceMetafieldDetails: Boolean = false
-    $numProductMetafields: Int = 0
-    $numProductVariants: Int = 250
-    $numProductMedia: Int = 6
-    $numProductVariantMetafields: Int = 0
-    $numProductVariantSellingPlanAllocations: Int = 0
-    $numProductSellingPlanGroups: Int = 0
-    $numProductSellingPlans: Int = 0
-  ) @inContext(country: $country) {
+  ) @inContext(country: $country, language: $language) {
     collection(handle: $handle) {
-      id
       title
-      description
       descriptionHtml
+      description
+      seo {
+        description
+        title
+      }
       image {
+        id
         url
         width
         height
+        altText
       }
       products(first: $numProducts) {
         edges {
           node {
+            title
             vendor
-            ...ProductProviderFragment
+            handle
+            descriptionHtml
+            compareAtPriceRange {
+              maxVariantPrice {
+                currencyCode
+                amount
+              }
+              minVariantPrice {
+                currencyCode
+                amount
+              }
+            }
+            variants(first: 1) {
+              edges {
+                node {
+                  id
+                  title
+                  availableForSale
+                  image {
+                    id
+                    url
+                    altText
+                    width
+                    height
+                  }
+                  priceV2 {
+                    currencyCode
+                    amount
+                  }
+                  compareAtPriceV2 {
+                    currencyCode
+                    amount
+                  }
+                }
+              }
+            }
           }
         }
         pageInfo {
@@ -99,7 +135,4 @@ const QUERY = gql`
       }
     }
   }
-
-  ${MediaFileFragment}
-  ${ProductProviderFragment}
 `;

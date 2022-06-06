@@ -1,13 +1,13 @@
 import {
+  useShop,
   useShopQuery,
   flattenConnection,
-  ProductProviderFragment,
-  Image,
   Link,
   Seo,
   CacheDays,
+  useSession,
+  gql,
 } from '@shopify/hydrogen';
-import gql from 'graphql-tag';
 
 import Layout from '../components/Layout.server';
 import FeaturedCollection from '../components/FeaturedCollection';
@@ -15,7 +15,9 @@ import ProductCard from '../components/ProductCard';
 import Welcome from '../components/Welcome.server';
 import {Suspense} from 'react';
 
-export default function Index({country = {isoCode: 'US'}}) {
+export default function Index() {
+  const {countryCode = 'US'} = useSession();
+
   return (
     <Layout hero={<GradientBackground />}>
       <Suspense fallback={null}>
@@ -24,10 +26,10 @@ export default function Index({country = {isoCode: 'US'}}) {
       <div className="relative mb-12">
         <Welcome />
         <Suspense fallback={<BoxFallback />}>
-          <FeaturedProductsBox country={country} />
+          <FeaturedProductsBox country={countryCode} />
         </Suspense>
         <Suspense fallback={<BoxFallback />}>
-          <FeaturedCollectionBox country={country} />
+          <FeaturedCollectionBox country={countryCode} />
         </Suspense>
       </div>
     </Layout>
@@ -37,10 +39,7 @@ export default function Index({country = {isoCode: 'US'}}) {
 function SeoForHomepage() {
   const {
     data: {
-      shop: {
-        name: shopName,
-        primaryDomain: {url: shopUrl},
-      },
+      shop: {title, description},
     },
   } = useShopQuery({
     query: SEO_QUERY,
@@ -52,8 +51,8 @@ function SeoForHomepage() {
     <Seo
       type="homepage"
       data={{
-        title: shopName,
-        url: shopUrl,
+        title,
+        description,
       }}
     />
   );
@@ -64,10 +63,13 @@ function BoxFallback() {
 }
 
 function FeaturedProductsBox({country}) {
+  const {languageCode} = useShop();
+
   const {data} = useShopQuery({
     query: QUERY,
     variables: {
-      country: country.isoCode,
+      country,
+      language: languageCode,
     },
     preload: true,
   });
@@ -117,10 +119,13 @@ function FeaturedProductsBox({country}) {
 }
 
 function FeaturedCollectionBox({country}) {
+  const {languageCode} = useShop();
+
   const {data} = useShopQuery({
     query: QUERY,
     variables: {
-      country: country.isoCode,
+      country,
+      language: languageCode,
     },
     preload: true,
   });
@@ -190,44 +195,57 @@ function GradientBackground() {
 const SEO_QUERY = gql`
   query homeShopInfo {
     shop {
-      name
       description
-      primaryDomain {
-        url
-      }
     }
   }
 `;
 
 const QUERY = gql`
-  query indexContent(
-    $country: CountryCode
-    $numCollections: Int = 2
-    $numProducts: Int = 3
-    $includeReferenceMetafieldDetails: Boolean = false
-    $numProductMetafields: Int = 0
-    $numProductVariants: Int = 250
-    $numProductMedia: Int = 1
-    $numProductVariantMetafields: Int = 10
-    $numProductVariantSellingPlanAllocations: Int = 0
-    $numProductSellingPlanGroups: Int = 0
-    $numProductSellingPlans: Int = 0
-  ) @inContext(country: $country) {
-    collections(first: $numCollections) {
+  query indexContent($country: CountryCode, $language: LanguageCode)
+  @inContext(country: $country, language: $language) {
+    collections(first: 2) {
       edges {
         node {
-          descriptionHtml
-          description
           handle
           id
           title
           image {
-            ...ImageFragment
+            id
+            url
+            altText
+            width
+            height
           }
-          products(first: $numProducts) {
+          products(first: 3) {
             edges {
               node {
-                ...ProductProviderFragment
+                handle
+                id
+                title
+                variants(first: 1) {
+                  edges {
+                    node {
+                      id
+                      title
+                      availableForSale
+                      image {
+                        id
+                        url
+                        altText
+                        width
+                        height
+                      }
+                      priceV2 {
+                        currencyCode
+                        amount
+                      }
+                      compareAtPriceV2 {
+                        currencyCode
+                        amount
+                      }
+                    }
+                  }
+                }
               }
             }
           }
@@ -235,7 +253,4 @@ const QUERY = gql`
       }
     }
   }
-
-  ${ProductProviderFragment}
-  ${Image.Fragment}
 `;

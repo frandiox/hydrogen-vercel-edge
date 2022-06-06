@@ -11,7 +11,7 @@ import {
   CartShopPayButton,
   CartEstimatedCost,
   useCartLine,
-} from '@shopify/hydrogen/client';
+} from '@shopify/hydrogen';
 import {Dialog} from '@headlessui/react';
 
 import {useCartUI} from './CartUIProvider.client';
@@ -26,7 +26,7 @@ export default function Cart() {
   const {totalQuantity} = useCart();
 
   return (
-    <div>
+    <>
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div
         className={`z-20 fixed top-0 bottom-0 left-0 right-0 bg-black transition-opacity duration-400 ${
@@ -52,7 +52,7 @@ export default function Cart() {
           )}
         </div>
       </Dialog>
-    </div>
+    </>
   );
 }
 
@@ -98,7 +98,7 @@ function LineInCart() {
         <Link to={`/products/${merchandise.product.handle}`}>
           <CartLineImage
             className="bg-white border border-black border-opacity-5 rounded-xl "
-            options={{width: 98, height: 98, crop: 'center'}}
+            loaderOptions={{width: 98, height: 98, crop: 'center'}}
           />
         </Link>
       </div>
