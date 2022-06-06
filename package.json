@@ -6,11 +6,13 @@
   "private": true,
   "scripts": {
     "dev": "shopify hydrogen dev",
-    "build": "shopify hydrogen build --entry edge-entry.js",
+    "build": "shopify hydrogen build --entry edge-entry.js && yarn prepare:output",
     "preview": "shopify hydrogen preview",
     "lint": "eslint --resolve-plugins-relative-to . --no-error-on-unmatched-pattern --ext .js,.ts,.jsx,.tsx src",
     "test": "WATCH=true vitest",
-    "test:ci": "yarn build --target node && vitest run"
+    "test:ci": "yarn build --target node && vitest run",
+    "prepare:output": "rm -rf .vercel/output && cp -r output-template .vercel/output && cp -r dist/client/* .vercel/output/static && rm .vercel/output/static/index.html && cp dist/worker/index.js .vercel/output/functions/hydrogen.func/",
+    "deploy": "vercel deploy --prebuilt"
   },
   "prettier": "@shopify/prettier-config",
   "devDependencies": {
