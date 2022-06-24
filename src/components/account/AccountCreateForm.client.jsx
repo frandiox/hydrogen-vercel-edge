@@ -1,35 +1,18 @@
-import React from 'react';
+import {useState} from 'react';
 import {useNavigate, Link} from '@shopify/hydrogen/client';
-import {callLoginApi} from './LoginForm.client';
 
-export default function AccountCreateForm() {
+import {emailValidation, passwordValidation} from '~/lib/utils';
+
+import {callLoginApi} from './AccountLoginForm.client';
+
+export function AccountCreateForm() {
   const navigate = useNavigate();
 
-  const [submitError, setSubmitError] = React.useState(null);
-
-  const [email, setEmail] = React.useState('');
-  const [emailError, setEmailError] = React.useState(null);
-
-  const [password, setPassword] = React.useState('');
-  const [passwordError, setPasswordError] = React.useState(null);
-
-  function emailValidation(email) {
-    if (email.validity.valid) return null;
-
-    return email.validity.valueMissing
-      ? 'Please enter an email'
-      : 'Please enter a valid email';
-  }
-
-  function passwordValidation(password) {
-    if (password.validity.valid) return null;
-
-    if (password.validity.valueMissing) {
-      return 'Please enter a password';
-    }
-
-    return 'Password must be at least 6 characters';
-  }
+  const [submitError, setSubmitError] = useState(null);
+  const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState(null);
+  const [password, setPassword] = useState('');
+  const [passwordError, setPasswordError] = useState(null);
 
   async function onSubmit(event) {
     event.preventDefault();
@@ -38,12 +21,12 @@ export default function AccountCreateForm() {
     setPasswordError(null);
     setSubmitError(null);
 
-    const newEmailError = emailValidation(event.target.email);
+    const newEmailError = emailValidation(event.currentTarget.email);
     if (newEmailError) {
       setEmailError(newEmailError);
     }
 
-    const newPasswordError = passwordValidation(event.target.password);
+    const newPasswordError = passwordValidation(event.currentTarget.password);
     if (newPasswordError) {
       setPasswordError(newPasswordError);
     }
@@ -72,18 +55,18 @@ export default function AccountCreateForm() {
   }
 
   return (
-    <div className="flex justify-center">
+    <div className="flex justify-center my-24 px-4">
       <div className="max-w-md w-full">
         <h1 className="text-4xl">Create an Account.</h1>
         <form noValidate className="pt-6 pb-8 mt-4 mb-4" onSubmit={onSubmit}>
           {submitError && (
             <div className="flex items-center justify-center mb-6 bg-zinc-500">
-              <p className="m-4 text-s text-white">{submitError}</p>
+              <p className="m-4 text-s text-contrast">{submitError}</p>
             </div>
           )}
-          <div className="mb-4">
+          <div className="mb-3">
             <input
-              className={`mb-1 appearance-none border w-full py-2 px-3 text-gray-800 placeholder:text-gray-500 leading-tight focus:shadow-outline ${
+              className={`mb-1 appearance-none rounded border w-full py-2 px-3 text-primary/90 placeholder:text-primary/50 leading-tight focus:shadow-outline ${
                 emailError ? ' border-red-500' : 'border-gray-900'
               }`}
               id="email"
@@ -93,22 +76,22 @@ export default function AccountCreateForm() {
               required
               placeholder="Email address"
               aria-label="Email address"
+              // eslint-disable-next-line jsx-a11y/no-autofocus
+              autoFocus
               value={email}
               onChange={(event) => {
                 setEmail(event.target.value);
               }}
             />
-            <p
-              className={`text-red-500 text-xs ${
-                !emailError ? 'invisible' : ''
-              }`}
-            >
-              {emailError} &nbsp;
-            </p>
+            {!emailError ? (
+              ''
+            ) : (
+              <p className={`text-red-500 text-xs`}>{emailError} &nbsp;</p>
+            )}
           </div>
-          <div className="mb-4">
+          <div className="mb-3">
             <input
-              className={`mb-1 appearance-none border w-full py-2 px-3 text-gray-800 placeholder:text-gray-500 leading-tight focus:shadow-outline ${
+              className={`mb-1 appearance-none rounded border w-full py-2 px-3 text-primary/90 placeholder:text-primary/50 leading-tight focus:shadow-outline ${
                 passwordError ? ' border-red-500' : 'border-gray-900'
               }`}
               id="password"
@@ -124,17 +107,15 @@ export default function AccountCreateForm() {
                 setPassword(event.target.value);
               }}
             />
-            <p
-              className={`text-red-500 text-xs ${
-                !passwordError ? 'invisible' : ''
-              }`}
-            >
-              {passwordError} &nbsp;
-            </p>
+            {!passwordError ? (
+              ''
+            ) : (
+              <p className={`text-red-500 text-xs`}>{passwordError} &nbsp;</p>
+            )}
           </div>
           <div className="flex items-center justify-between">
             <button
-              className="bg-gray-900 text-white uppercase py-2 px-4 focus:shadow-outline block w-full"
+              className="bg-gray-900 text-contrast rounded py-2 px-4 focus:shadow-outline block w-full"
               type="submit"
             >
               Create Account
@@ -154,25 +135,29 @@ export default function AccountCreateForm() {
   );
 }
 
-function callAccountCreateApi({email, password, firstName, lastName}) {
-  return fetch(`/account/register`, {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({email, password, firstName, lastName}),
-  })
-    .then((res) => {
-      if (res.status === 200) {
-        return {};
-      } else {
-        return res.json();
-      }
-    })
-    .catch((error) => {
-      return {
-        error: error.toString(),
-      };
+export async function callAccountCreateApi({
+  email,
+  password,
+  firstName,
+  lastName,
+}) {
+  try {
+    const res = await fetch(`/account/register`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({email, password, firstName, lastName}),
     });
+    if (res.status === 200) {
+      return {};
+    } else {
+      return res.json();
+    }
+  } catch (error) {
+    return {
+      error: error.toString(),
+    };
+  }
 }

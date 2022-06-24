@@ -1,30 +1,33 @@
-import {useShopQuery, CacheDays, NoStore, Seo, gql} from '@shopify/hydrogen';
+import {Suspense} from 'react';
+import {useShopQuery, CacheLong, CacheNone, Seo, gql} from '@shopify/hydrogen';
 
-import Layout from '../../components/Layout.server';
-import LoginForm from '../../components/account/LoginForm.client';
+import {AccountLoginForm} from '~/components';
+import {Layout} from '~/components/index.server';
 
 export default function Login({response}) {
-  response.cache(NoStore());
+  response.cache(CacheNone());
 
   const {
     data: {
       shop: {name},
     },
   } = useShopQuery({
-    query: QUERY,
-    cache: CacheDays(),
+    query: SHOP_QUERY,
+    cache: CacheLong(),
     preload: '*',
   });
 
   return (
     <Layout>
-      <Seo type="noindex" data={{title: 'Login'}} />
-      <LoginForm shopName={name} />
+      <Suspense>
+        <Seo type="noindex" data={{title: 'Login'}} />
+      </Suspense>
+      <AccountLoginForm shopName={name} />
     </Layout>
   );
 }
 
-const QUERY = gql`
+const SHOP_QUERY = gql`
   query shopInfo {
     shop {
       name
@@ -33,6 +36,10 @@ const QUERY = gql`
 `;
 
 export async function api(request, {session, queryShop}) {
+  if (!session) {
+    return new Response('Session storage not available.', {status: 400});
+  }
+
   const jsonBody = await request.json();
 
   if (
@@ -47,20 +54,19 @@ export async function api(request, {session, queryShop}) {
     );
   }
 
-  const {data, error} = await queryShop({
-    query: LOGIN,
+  const {data, errors} = await queryShop({
+    query: LOGIN_MUTATION,
     variables: {
       input: {
         email: jsonBody.email,
         password: jsonBody.password,
       },
     },
-    cache: NoStore(),
+    // @ts-expect-error `queryShop.cache` is not yet supported but soon will be.
+    cache: CacheNone(),
   });
 
-  if (
-    data?.customerAccessTokenCreate?.customerAccessToken?.accessToken !== null
-  ) {
+  if (data?.customerAccessTokenCreate?.customerAccessToken?.accessToken) {
     await session.set(
       'customerAccessToken',
       data.customerAccessTokenCreate.customerAccessToken.accessToken,
@@ -72,14 +78,14 @@ export async function api(request, {session, queryShop}) {
   } else {
     return new Response(
       JSON.stringify({
-        error: data?.customerAccessTokenCreate?.customerUserErrors ?? error,
+        error: data?.customerAccessTokenCreate?.customerUserErrors ?? errors,
       }),
       {status: 401},
     );
   }
 }
 
-const LOGIN = gql`
+const LOGIN_MUTATION = gql`
   mutation customerAccessTokenCreate($input: CustomerAccessTokenCreateInput!) {
     customerAccessTokenCreate(input: $input) {
       customerUserErrors {

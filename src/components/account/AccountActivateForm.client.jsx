@@ -1,16 +1,14 @@
-import React from 'react';
+import {useState} from 'react';
 import {useNavigate} from '@shopify/hydrogen/client';
 
-export default function AccountActivateForm({id, activationToken}) {
+export function AccountActivateForm({id, activationToken}) {
   const navigate = useNavigate();
 
-  const [submitError, setSubmitError] = React.useState(null);
-
-  const [password, setPassword] = React.useState('');
-  const [passwordError, setPasswordError] = React.useState(null);
-
-  const [passwordConfirm, setPasswordConfirm] = React.useState('');
-  const [passwordConfirmError, setPasswordConfirmError] = React.useState(null);
+  const [submitError, setSubmitError] = useState(null);
+  const [password, setPassword] = useState('');
+  const [passwordError, setPasswordError] = useState(null);
+  const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [passwordConfirmError, setPasswordConfirmError] = useState(null);
 
   function passwordValidation(form) {
     setPasswordError(null);
@@ -38,7 +36,7 @@ export default function AccountActivateForm({id, activationToken}) {
 
     if (password !== passwordConfirm) {
       hasError = true;
-      setPasswordConfirmError('The two password entered did not match.');
+      setPasswordConfirmError('The two passwords entered did not match.');
     }
 
     return hasError;
@@ -47,7 +45,7 @@ export default function AccountActivateForm({id, activationToken}) {
   async function onSubmit(event) {
     event.preventDefault();
 
-    if (passwordValidation(event.target)) {
+    if (passwordValidation(event.currentTarget)) {
       return;
     }
 
@@ -67,19 +65,19 @@ export default function AccountActivateForm({id, activationToken}) {
 
   return (
     <div className="flex justify-center">
-      <div className="max-w-md w-full">
+      <div className="w-full max-w-md">
         <h1 className="text-4xl">Activate Account.</h1>
         <p className="mt-4">Create your password to activate your account.</p>
         <form noValidate className="pt-6 pb-8 mt-4 mb-4" onSubmit={onSubmit}>
           {submitError && (
-            <div className="flex items-center justify-center mb-6 bg-zinc-500">
-              <p className="m-4 text-s text-white">{submitError}</p>
+            <div className="flex items-center justify-center mb-6 bg-primary/30">
+              <p className="m-4 text-s text-contrast">{submitError}</p>
             </div>
           )}
           <div className="mb-4">
             <input
-              className={`mb-1 appearance-none border w-full py-2 px-3 text-gray-800 placeholder:text-gray-500 leading-tight focus:shadow-outline ${
-                passwordError ? ' border-red-500' : 'border-gray-900'
+              className={`mb-1 appearance-none border w-full py-2 px-3 text-primary placeholder:text-primary/30 leading-tight focus:shadow-outline ${
+                passwordError ? ' border-notice' : 'border-primary'
               }`}
               id="password"
               name="password"
@@ -104,7 +102,7 @@ export default function AccountActivateForm({id, activationToken}) {
           </div>
           <div className="mb-4">
             <input
-              className={`mb-1 appearance-none border w-full py-2 px-3 text-gray-800 placeholder:text-gray-500 leading-tight focus:shadow-outline ${
+              className={`mb-1 appearance-none border w-full py-2 px-3 text-primary/90 placeholder:text-primary/50 leading-tight focus:shadow-outline ${
                 passwordConfirmError ? ' border-red-500' : 'border-gray-900'
               }`}
               id="passwordConfirm"
@@ -130,7 +128,7 @@ export default function AccountActivateForm({id, activationToken}) {
           </div>
           <div className="flex items-center justify-between">
             <button
-              className="bg-gray-900 text-white uppercase py-2 px-4 focus:shadow-outline block w-full"
+              className="block w-full px-4 py-2 text-contrast uppercase bg-gray-900 focus:shadow-outline"
               type="submit"
             >
               Save
@@ -142,25 +140,24 @@ export default function AccountActivateForm({id, activationToken}) {
   );
 }
 
-function callActivateApi({id, activationToken, password}) {
-  return fetch(`/account/activate`, {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({id, activationToken, password}),
-  })
-    .then((res) => {
-      if (res.ok) {
-        return {};
-      } else {
-        return res.json();
-      }
-    })
-    .catch((error) => {
-      return {
-        error: error.toString(),
-      };
+async function callActivateApi({id, activationToken, password}) {
+  try {
+    const res = await fetch(`/account/activate`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({id, activationToken, password}),
     });
+    if (res.ok) {
+      return {};
+    } else {
+      return res.json();
+    }
+  } catch (error) {
+    return {
+      error: error.toString(),
+    };
+  }
 }

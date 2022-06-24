@@ -1,7 +1,8 @@
-import {NoStore, Seo, gql} from '@shopify/hydrogen';
+import {Suspense} from 'react';
+import {CacheNone, Seo, gql} from '@shopify/hydrogen';
 
-import Layout from '../../components/Layout.server';
-import AccountRecoverForm from '../../components/account/AccountRecoverForm.client';
+import {AccountRecoverForm} from '~/components';
+import {Layout} from '~/components/index.server';
 
 /**
  * A form for the user to fill out to _initiate_ a password reset.
@@ -9,12 +10,14 @@ import AccountRecoverForm from '../../components/account/AccountRecoverForm.clie
  * to reset their password. Clicking the link leads the user to the
  * page `/account/reset/[resetToken]`.
  */
-export default function Recover({response}) {
-  response.cache(NoStore());
+export default function AccountRecover({response}) {
+  response.cache(CacheNone());
 
   return (
     <Layout>
-      <Seo type="noindex" data={{title: 'Recover password'}} />
+      <Suspense>
+        <Seo type="noindex" data={{title: 'Recover password'}} />
+      </Suspense>
       <AccountRecoverForm />
     </Layout>
   );
@@ -30,11 +33,12 @@ export async function api(request, {queryShop}) {
   }
 
   await queryShop({
-    query: MUTATION,
+    query: CUSTOMER_RECOVER_MUTATION,
     variables: {
       email: jsonBody.email,
     },
-    cache: NoStore(),
+    // @ts-expect-error `queryShop.cache` is not yet supported but soon will be.
+    cache: CacheNone(),
   });
 
   // Ignore errors, we don't want to tell the user if the email was
@@ -44,7 +48,7 @@ export async function api(request, {queryShop}) {
   });
 }
 
-const MUTATION = gql`
+const CUSTOMER_RECOVER_MUTATION = gql`
   mutation customerRecover($email: String!) {
     customerRecover(email: $email) {
       customerUserErrors {

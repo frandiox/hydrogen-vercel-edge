@@ -1,14 +1,18 @@
-import {NoStore, Seo, gql} from '@shopify/hydrogen';
+import {Suspense} from 'react';
+import {CacheNone, Seo, gql} from '@shopify/hydrogen';
 
-import Layout from '../../components/Layout.server';
-import AccountCreateForm from '../../components/account/AccountCreateForm.client';
+import {AccountCreateForm} from '~/components';
+import {Layout} from '~/components/index.server';
+import {getApiErrorMessage} from '~/lib/utils';
 
 export default function Register({response}) {
-  response.cache(NoStore());
+  response.cache(CacheNone());
 
   return (
     <Layout>
-      <Seo type="noindex" data={{title: 'Register'}} />
+      <Suspense>
+        <Seo type="noindex" data={{title: 'Register'}} />
+      </Suspense>
       <AccountCreateForm />
     </Layout>
   );
@@ -30,7 +34,7 @@ export async function api(request, {queryShop}) {
   }
 
   const {data, errors} = await queryShop({
-    query: MUTATION,
+    query: CUSTOMER_CREATE_MUTATION,
     variables: {
       input: {
         email: jsonBody.email,
@@ -39,10 +43,11 @@ export async function api(request, {queryShop}) {
         lastName: jsonBody.lastName,
       },
     },
-    cache: NoStore(),
+    // @ts-expect-error `queryShop.cache` is not yet supported but soon will be.
+    cache: CacheNone(),
   });
 
-  const errorMessage = getErrorMessage(data, errors);
+  const errorMessage = getApiErrorMessage('customerCreate', data, errors);
 
   if (
     !errorMessage &&
@@ -64,7 +69,7 @@ export async function api(request, {queryShop}) {
   }
 }
 
-const MUTATION = gql`
+const CUSTOMER_CREATE_MUTATION = gql`
   mutation customerCreate($input: CustomerCreateInput!) {
     customerCreate(input: $input) {
       customer {
@@ -78,10 +83,3 @@ const MUTATION = gql`
     }
   }
 `;
-
-function getErrorMessage(data, errors) {
-  if (errors?.length) return errors[0].message ?? errors[0];
-  if (data?.customerCreate?.customerUserErrors?.length)
-    return data.customerCreate.customerUserErrors[0].message;
-  return null;
-}
