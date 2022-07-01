@@ -5,19 +5,7 @@ import indexTemplate from './dist/client/index.html?raw';
 import {ReadableStream} from 'web-streams-polyfill/ponyfill';
 Object.assign(globalThis, {ReadableStream});
 
-function isAsset(url) {
-  return /\.(png|jpe?g|gif|css|js|svg|ico|map|json)$/i.test(url.pathname);
-}
-
-export default async function middleware(request, event) {
-  const url = new URL(request.url);
-  if (isAsset(url)) {
-    // Continue with Vercel's default asset handler
-    return new Response(null, {
-      headers: {'x-middleware-next': '1'},
-    });
-  }
-
+export default async (request, event) => {
   try {
     return await handleRequest(request, {
       indexTemplate,

@@ -2,9 +2,11 @@
   "version": 3,
   "routes": [
     {
+      "handle": "filesystem"
+    },
+    {
       "src": "/(.*)",
-      "middlewarePath": "hydrogen",
-      "continue": true
+      "dest": "hydrogen"
     }
   ]
 }
