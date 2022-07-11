@@ -4,6 +4,11 @@ Hydrogen is a React framework and SDK that you can use to build fast and dynamic
 
 [Check out the docs](https://shopify.dev/custom-storefronts/hydrogen)
 
+
+> ⚠️ UPDATE:
+> You might not need this template anymore since Vercel now provides [zero-config support for Hydrogen](https://vercel.com/changelog/hydrogen-projects-can-now-be-deployed-with-zero-configuration).
+
+
 ## Getting started
 
 **Requirements:**
